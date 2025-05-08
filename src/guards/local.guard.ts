@@ -14,7 +14,7 @@ export class LocalAuthGuard extends AuthGuard('local') {
     const body = plainToInstance(LoginDto, request.body);
     const errors = await validate(body);
     const errorMessages = errors.flatMap(({ constraints }) =>
-      Object.values(constraints),
+      Object.values(constraints || {}),
     );
 
     if (errorMessages.length > 0) {
