@@ -2,8 +2,8 @@ import { Module, ValidationPipe } from '@nestjs/common';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
-import { AuthService } from './services/auth/auth.service';
-import { AuthController } from './controllers/auth/auth.controller';
+import { AuthService } from './modules/auth/auth.service';
+import { AuthController } from './modules/auth/auth.controller';
 import { APP_GUARD } from '@nestjs/core';
 
 @Module({

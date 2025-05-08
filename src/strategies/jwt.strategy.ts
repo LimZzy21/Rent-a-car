@@ -4,7 +4,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt } from 'passport-jwt';
 import * as passportJwt from 'passport-jwt';
 import { JwtPayload } from 'src/dto/auth/jwt.payload';
-import { UsersService } from 'src/services/users/users.service';
+import { UsersService } from 'src/modules/users/users.service';
 
 const JwtStrategyBase = passportJwt.Strategy;
 
