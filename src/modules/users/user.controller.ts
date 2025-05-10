@@ -2,12 +2,13 @@ import {
   Get,
   Controller,
   Param,
-  NotFoundException,
   Request,
 } from '@nestjs/common';
 import { UsersService } from 'src/modules/users/users.service';
 import removeProperties from 'src/utils/removeProperties';
 import { CustomRequest } from 'src/types/entities/customRequest';
+import { NotFoundException } from 'src/common/exceptions/business.exceptions';
+import { AuthErrors } from 'src/Constants/Errors/Auth';
 
 @Controller('users')
 export class UserController {
@@ -26,7 +27,7 @@ export class UserController {
   async getUserById(@Param('id') id: string) {
     const user = await this.userService.getUserById({ id });
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException(AuthErrors.USER_NOT_FOUND);
     }
     const userWithoutPassword = removeProperties(user, 'password');
     return userWithoutPassword;

@@ -1,112 +1,87 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Car, Prisma } from '@prisma/client';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { NotFoundException } from 'src/common/exceptions/business.exceptions';
+import { CarErrors } from 'src/Constants/Errors/Car';
+import { CreateCarDto } from './dto/create-car.dto';
 
 @Injectable()
 export class CarService {
   constructor(private prismaService: PrismaService) {}
 
-  async create(createCarDto: any): Promise<Car> {
-    try {
-      const { carDetails, ...carData } = createCarDto;
+  async create(createCarDto: CreateCarDto): Promise<Car> {
+    const { carDetails, ...carData } = createCarDto;
 
-      return await this.prismaService.car.create({
-        data: {
-          ...carData,
-          carDetails: {
-            create: carDetails,
-          },
+    return await this.prismaService.car.create({
+      data: {
+        ...carData,
+        carDetails: {
+          create: carDetails,
         },
-        include: {
-          carDetails: true,
-        },
-      });
-    } catch (error) {
-      if (error instanceof PrismaClientKnownRequestError) {
-        if (error.code === 'P2002') {
-          throw new ForbiddenException('Car with this name already exists');
-        }
-      }
-      throw error;
-    }
+      },
+      include: {
+        carDetails: true,
+      },
+    });
   }
 
-  getAllCars(params: {
+  async getAllCars(params: {
     skip?: number;
     take?: number;
     cursor?: Prisma.CarWhereUniqueInput;
     where?: Prisma.CarWhereInput;
     orderBy?: Prisma.CarOrderByWithRelationInput;
   }) {
-    try {
-      const { skip, take, cursor, where, orderBy } = params;
-      return this.prismaService.car.findMany({
-        skip,
-        take,
-        cursor,
-        where,
-        orderBy,
-        include: {
-          carDetails: true,
-        },
+    const { skip, take, cursor, where, orderBy } = params;
+    const cars = await this.prismaService.car.findMany({
+      skip,
+      take,
+      cursor,
+      where,
+      orderBy,
+      include: {
+        carDetails: true,
+      },
+    });
+
+    if (!cars.length) {
+      throw new NotFoundException(CarErrors.CAR_NOT_FOUND, {
+        filters: where,
       });
-    } catch (error) {
-      if (error instanceof PrismaClientKnownRequestError) {
-        throw new NotFoundException('Car not found');
-      }
-      throw error;
     }
+
+    return cars;
   }
 
   async getCarById(id: string) {
-    try {
-      const car = await this.prismaService.car.findUnique({
-        where: { id },
-        include: {
-          carDetails: true,
-        },
-      });
+    const car = await this.prismaService.car.findUnique({
+      where: { id },
+      include: {
+        carDetails: true,
+      },
+    });
 
-      if (!car) {
-        throw new NotFoundException('Car not found');
-      }
-      return car;
-    } catch (error) {
-      if (error instanceof PrismaClientKnownRequestError) {
-        if (error.code === 'P2025') {
-          throw new NotFoundException('Car not found');
-        }
-      }
-      throw error;
+    if (!car) {
+      throw new NotFoundException(CarErrors.CAR_NOT_FOUND, {
+        carId: id,
+      });
     }
+    return car;
   }
 
   async deleteCar(id: string) {
-    try {
-      const car = await this.prismaService.car.findUnique({
-        where: { id },
-      });
-      if (!car) {
-        throw new NotFoundException('Car not found');
-      }
+    const car = await this.prismaService.car.findUnique({
+      where: { id },
+    });
 
-      return this.prismaService.car.delete({
-        where: { id },
+    if (!car) {
+      throw new NotFoundException(CarErrors.CAR_NOT_FOUND, {
+        carId: id,
       });
-    } catch (error) {
-      if (error instanceof PrismaClientKnownRequestError) {
-        throw new NotFoundException('Car not found');
-      }
-      throw error;
     }
-  }
 
-  remove(id: number) {
-    return `This action removes a #${id} car`;
+    return await this.prismaService.car.delete({
+      where: { id },
+    });
   }
 }

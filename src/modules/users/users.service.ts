@@ -1,14 +1,13 @@
 import {
-  ForbiddenException,
   Injectable,
-  NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma, User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { BcryptInterface } from 'src/types/entities/bcrypt';
-
+import { AuthErrors } from 'src/Constants/Errors/Auth';
+import { ForbiddenException, NotFoundException } from 'src/common/exceptions/business.exceptions';
 @Injectable()
 export class UsersService {
   constructor(private prismaService: PrismaService) {}
@@ -27,7 +26,7 @@ export class UsersService {
     } catch (err) {
       if (err instanceof PrismaClientKnownRequestError) {
         if (err.code === 'P2002') {
-          throw new ForbiddenException('User with this email already exists');
+          throw new ForbiddenException(AuthErrors.USER_ALREADY_EXISTS);
         }
       }
       throw err;
@@ -77,7 +76,7 @@ export class UsersService {
       where: dto,
     });
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException(AuthErrors.USER_NOT_FOUND);
     }
     return user;
   }

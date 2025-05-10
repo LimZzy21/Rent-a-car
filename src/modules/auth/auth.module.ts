@@ -15,7 +15,9 @@ import { AuthService } from './auth.service';
   imports: [
     UsersModule,
     PassportModule,
-    ConfigModule,
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     JwtModule.registerAsync({
       global: true,
       imports: [ConfigModule],
