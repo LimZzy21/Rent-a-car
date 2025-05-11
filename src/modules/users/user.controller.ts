@@ -3,12 +3,14 @@ import {
   Controller,
   Param,
   Request,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from 'src/modules/users/users.service';
 import removeProperties from 'src/utils/removeProperties';
 import { CustomRequest } from 'src/types/entities/customRequest';
 import { NotFoundException } from 'src/common/exceptions/business.exceptions';
 import { AuthErrors } from 'src/Constants/Errors/Auth';
+import { JwtAuthGuard } from 'src/guards/jwt.guard';
 
 @Controller('users')
 export class UserController {
@@ -23,6 +25,15 @@ export class UserController {
     return usersWithoutPassword;
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  async findMe(@Request() req: CustomRequest) {
+    const user = await this.userService.user({
+      id: req.user.id,
+    });
+    return removeProperties(user, 'password' as never);
+  }
+
   @Get(':id')
   async getUserById(@Param('id') id: string) {
     const user = await this.userService.getUserById({ id });
@@ -31,13 +42,5 @@ export class UserController {
     }
     const userWithoutPassword = removeProperties(user, 'password');
     return userWithoutPassword;
-  }
-  
-  @Get('me')
-  async findMe(@Request() req: CustomRequest) {
-    const user = await this.userService.user({
-      id: req.user.id,
-    });
-    return removeProperties(user, 'password' as never);
   }
 }

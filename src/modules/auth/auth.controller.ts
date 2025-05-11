@@ -32,7 +32,7 @@ export class AuthController {
   async login(@Request() req: CustomRequest) {
     const accessToken = await this.authService.login(req.user);
     return {
-      accessToken,
+      accessToken: accessToken.access_token,
       user: removeProperties(req.user, 'password'),
     };
   }

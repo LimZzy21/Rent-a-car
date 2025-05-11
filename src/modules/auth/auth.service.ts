@@ -5,7 +5,6 @@ import * as bcrypt from 'bcrypt';
 import { BcryptInterface } from 'src/types/entities/bcrypt';
 import { JwtPayload } from 'src/dto/auth/jwt.payload';
 import { UsersService } from '../users/users.service';
-import { Response } from 'express';
 import { UnauthorizedException } from 'src/common/exceptions/business.exceptions';
 import { AuthErrors } from 'src/Constants/Errors/Auth';
 @Injectable()
@@ -15,7 +14,10 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async validateUserByPassword(key: string, pass: string): Promise<User | null> {
+  async validateUserByPassword(
+    key: string,
+    pass: string,
+  ): Promise<User | null> {
     const user = await this.usersService.getUserById({
       email: key,
     });
@@ -31,20 +33,24 @@ export class AuthService {
     return null;
   }
 
-  async login(user: User, response?: Response) {
+  async login(user: User) {
     const payload: JwtPayload = { sub: user.id };
     const access_token = await this.jwtService.signAsync(payload);
-    
-    if (response) {
-      response.cookie('access_token', access_token, {
-        httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000, 
-      });
-    }
 
     return {
       access_token,
     };
   }
 
+  async validateUserByToken(token: string): Promise<User | null> {
+    try {
+      const payload = await this.jwtService.verifyAsync<JwtPayload>(token);
+      const user = await this.usersService.getUserById({
+        id: payload.sub,
+      });
+      return user;
+    } catch {
+      return null;
+    }
+  }
 }

@@ -1,21 +1,30 @@
-import {
-  Injectable,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma, User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { BcryptInterface } from 'src/types/entities/bcrypt';
 import { AuthErrors } from 'src/Constants/Errors/Auth';
-import { ForbiddenException, NotFoundException } from 'src/common/exceptions/business.exceptions';
+import {
+  ForbiddenException,
+  NotFoundException,
+} from 'src/common/exceptions/business.exceptions';
 @Injectable()
 export class UsersService {
   constructor(private prismaService: PrismaService) {}
 
-  async createUser(userData: { email: string; password: string; confirmPassword: string; fullName: string }): Promise<User> {
+  async createUser(userData: {
+    email: string;
+    password: string;
+    confirmPassword: string;
+    fullName: string;
+  }): Promise<User> {
     try {
       const bcryptTyped = bcrypt as unknown as BcryptInterface;
-      const hashedPassword: string = await bcryptTyped.hash(userData.password, 10);
+      const hashedPassword: string = await bcryptTyped.hash(
+        userData.password,
+        10,
+      );
 
       if (userData.password !== userData.confirmPassword) {
         throw new ForbiddenException(AuthErrors.PASSWORD_NOT_MATCH);
@@ -29,7 +38,6 @@ export class UsersService {
         },
       });
       return user;
-
     } catch (err) {
       if (err instanceof PrismaClientKnownRequestError) {
         if (err.code === 'P2002') {
@@ -69,7 +77,7 @@ export class UsersService {
       orderBy,
     });
   }
-  
+
   async user(
     userWhereUniqueInput: Prisma.UserWhereUniqueInput,
   ): Promise<User | null> {
@@ -94,7 +102,4 @@ export class UsersService {
     });
     return user;
   }
-
-
-  
 }
