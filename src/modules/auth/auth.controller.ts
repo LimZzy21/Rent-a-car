@@ -18,10 +18,13 @@ export class AuthController {
   @Post('register')
   async register(@Body() body: RegisterDto) {
     const user = await this.userService.createUser({
+      fullName: body.fullName,
       email: body.email,
       password: body.password,
+      confirmPassword: body.confirmPassword,
     });
-    return user;
+
+    return removeProperties(user, 'password');
   }
   @Public()
   @UseGuards(LocalAuthGuard)

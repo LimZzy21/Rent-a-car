@@ -12,17 +12,24 @@ import { ForbiddenException, NotFoundException } from 'src/common/exceptions/bus
 export class UsersService {
   constructor(private prismaService: PrismaService) {}
 
-  async createUser(userData: { email: string; password: string }): Promise<User> {
+  async createUser(userData: { email: string; password: string; confirmPassword: string; fullName: string }): Promise<User> {
     try {
       const bcryptTyped = bcrypt as unknown as BcryptInterface;
       const hashedPassword: string = await bcryptTyped.hash(userData.password, 10);
 
-      return await this.prismaService.user.create({
+      if (userData.password !== userData.confirmPassword) {
+        throw new ForbiddenException(AuthErrors.PASSWORD_NOT_MATCH);
+      }
+
+      const user = await this.prismaService.user.create({
         data: {
           email: userData.email,
           password: hashedPassword,
+          fullName: userData.fullName,
         },
       });
+      return user;
+
     } catch (err) {
       if (err instanceof PrismaClientKnownRequestError) {
         if (err.code === 'P2002') {

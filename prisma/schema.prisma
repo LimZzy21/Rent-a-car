@@ -2,6 +2,7 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,27 +11,28 @@ model User {
   id        String   @id @default(uuid())
   email     String   @unique
   password  String
+  fullName  String
   createdAt DateTime @default(now())
 }
 
 model Car {
-    id                String      @id @default(uuid())
-    name              String
-    brand             String
-    model             String
-    price             Int
-    rating            Int
-    isCurrentlyRented Boolean     @default(false)
-    carDetails        CarDetails? @relation("CarToDetails")
-    createdAt         DateTime    @default(now())
+  id                String      @id @default(uuid())
+  name              String
+  brand             String
+  model             String
+  price             Int
+  rating            Int
+  isCurrentlyRented Boolean     @default(false)
+  carDetails        CarDetails? @relation("CarToDetails")
+  createdAt         DateTime    @default(now())
 }
 
 model CarDetails {
-    carId        String @id
-    car          Car    @relation("CarToDetails", fields: [carId], references: [id])
-    fuelType     String
-    transmission String
-    mileage      Int
-    engineSize   Int
-    enginePower  Int
+  carId        String @id
+  car          Car    @relation("CarToDetails", fields: [carId], references: [id])
+  fuelType     String
+  transmission String
+  mileage      Int
+  engineSize   Int
+  enginePower  Int
 }

@@ -5,15 +5,21 @@ import { GlobalExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  
+
   app.enableCors({
-    origin: true,
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:4200',
+    ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization'],
     exposedHeaders: ['Content-Range', 'X-Content-Range'],
+    maxAge: 600,
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   });
-  
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -26,7 +32,7 @@ async function bootstrap() {
     }),
   );
   app.useGlobalFilters(new GlobalExceptionFilter());
-  
-  await app.listen(process.env.PORT ??  3000);
+
+  await app.listen(process.env.PORT ?? 3001);
 }
 void bootstrap();
