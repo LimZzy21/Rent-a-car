@@ -8,11 +8,12 @@ generator client {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
+  id        String      @id @default(uuid())
+  email     String      @unique
   password  String
   fullName  String
-  createdAt DateTime @default(now())
+  reviews   CarReview[] @relation("UserToReviews")
+  createdAt DateTime    @default(now())
 }
 
 model Car {
@@ -24,6 +25,7 @@ model Car {
   rating            Int
   isCurrentlyRented Boolean     @default(false)
   carDetails        CarDetails? @relation("CarToDetails")
+  reviews           CarReview[] @relation("CarToReviews")
   createdAt         DateTime    @default(now())
 }
 
@@ -35,4 +37,15 @@ model CarDetails {
   mileage      Int
   engineSize   Int
   enginePower  Int
+}
+
+model CarReview {
+  id          String   @id @default(uuid())
+  videoUrl    String
+  videoKey    String
+  reviewedCar Car      @relation("CarToReviews", fields: [carId], references: [id])
+  carId       String
+  reviewer    User     @relation("UserToReviews", fields: [reviewerId], references: [id])
+  reviewerId  String
+  createdAt   DateTime @default(now())
 }
