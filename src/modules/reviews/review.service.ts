@@ -1,16 +1,26 @@
-import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AwsService } from 'src/modules/aws/aws.service';
 import { CarReview } from '@prisma/client';
-
+import { CarErrors } from 'src/Constants/Errors/Car';
+import { AWS_ERRORS } from 'src/Constants/Errors/AWS';
 
 @Injectable()
 export class CarReviewService {
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly awsService: AwsService, ) {}
+    private readonly awsService: AwsService,
+  ) {}
 
-  async create(carId: string, userId: string, file: Express.Multer.File): Promise<CarReview> {
+  async create(
+    carId: string,
+    userId: string,
+    file: Express.Multer.File,
+  ): Promise<CarReview> {
     try {
       const { url, key } = await this.awsService.uploadMediaFile(file);
 
@@ -22,13 +32,17 @@ export class CarReviewService {
           videoKey: key,
         },
       });
-    } catch (error) {
-      throw new InternalServerErrorException('Failed to create car review with video', error);
+    } catch {
+      throw new InternalServerErrorException(
+        AWS_ERRORS.FAILED_TO_UPLOAD_MEDIA_FILE,
+      );
     }
   }
 
   async getAll(): Promise<CarReview[]> {
-    return this.prismaService.carReview.findMany();
+    return Promise.resolve(
+      (await this.prismaService.carReview.findMany({})) as CarReview[],
+    );
   }
 
   async getById(id: string): Promise<CarReview> {
@@ -37,16 +51,18 @@ export class CarReviewService {
     });
 
     if (!review) {
-      throw new NotFoundException('Review not found');
+      throw new NotFoundException(CarErrors.CAR_REVIEW_NOT_FOUND);
     }
 
     return review;
   }
 
   async getByCarId(carId: string): Promise<CarReview[]> {
-    return this.prismaService.carReview.findMany({
-      where: { carId },
-    });
+    return Promise.resolve(
+      (await this.prismaService.carReview.findMany({
+        where: { carId },
+      })) as CarReview[],
+    );
   }
 
   async deleteReview(id: string): Promise<{ message: string }> {
@@ -55,17 +71,17 @@ export class CarReviewService {
     });
 
     if (!review) {
-      throw new NotFoundException('Review not found');
+      throw new NotFoundException(CarErrors.CAR_REVIEW_NOT_FOUND);
     }
 
-    if (review.videoKey) {
-      await this.awsService.deleteMediaByKey(review.videoKey);
+    if (review.videoKey && typeof review.videoKey === 'string') {
+      await this.awsService.deleteMediaByKey(review.videoKey as string);
     }
 
     await this.prismaService.carReview.delete({
       where: { id },
     });
 
-    return { message: 'Review and video deleted successfully' };
+    return { message: CarErrors.CAR_REVIEW_DELETED_SUCCESSFULLY };
   }
 }

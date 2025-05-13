@@ -1,7 +1,12 @@
 import { ConfigService } from '@nestjs/config';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+} from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
+import { AWS_ERRORS } from 'src/Constants/Errors/AWS';
 
 @Injectable()
 export class AwsService {
@@ -12,9 +17,12 @@ export class AwsService {
     const awsRegion = this.configService.get('AWS_REGION');
     const awsAccessKey = this.configService.get('AWS_ACCESS_KEY');
     const awsSecretKey = this.configService.get('AWS_SECRET_ACCESS_KEY');
+    console.log(awsRegion, awsAccessKey, awsSecretKey);
 
     if (!awsRegion || !awsAccessKey || !awsSecretKey) {
-      throw new InternalServerErrorException('Missing one or more required AWS environment variables');
+      throw new InternalServerErrorException(
+        AWS_ERRORS.MISSING_AWS_ENV_VARIABLES,
+      );
     }
 
     this.client = new S3Client({
@@ -25,13 +33,17 @@ export class AwsService {
       },
       forcePathStyle: true,
     });
+    console.log('✅ Successfully connected to AWS S3 with region:', awsRegion, 'and bucket:', this.bucketName);
   }
 
   async uploadMediaFile(file: Express.Multer.File) {
     try {
-      const key = uuidv4();
+      const key = uuidv4() as string;
 
-      const sanitizedOriginalName = file.originalname.replace(/[^a-zA-Z0-9-_]/g, '_');
+      const sanitizedOriginalName = file.originalname.replace(
+        /[^a-zA-Z0-9-_]/g,
+        '_',
+      );
 
       const command = new PutObjectCommand({
         Bucket: this.bucketName,
@@ -46,8 +58,10 @@ export class AwsService {
 
       await this.client.send(command);
 
+      const url = this.getMediaFileUrl(key).url;
+
       return {
-        url: this.getMediaFileUrl(key).url,
+        url,
         key,
       };
     } catch (error) {
@@ -68,7 +82,7 @@ export class AwsService {
 
       await this.client.send(command);
 
-      return { message: 'File deleted successfully' };
+      return { message: AWS_ERRORS.FILE_DELETED_SUCCESSFULLY };
     } catch (error) {
       throw new InternalServerErrorException(error);
     }

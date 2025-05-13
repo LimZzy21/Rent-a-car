@@ -6,7 +6,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { AuthService } from './modules/auth/auth.service';
 import { AuthController } from './modules/auth/auth.controller';
 import { CarModule } from './modules/car/car.module';
-import { CarReviewModule } from './modules/car.reviews/car-review.module';
+import { CarReviewModule } from './modules/reviews/review.module';
 import { AwsModule } from './modules/aws/aws.module';
 
 @Module({
