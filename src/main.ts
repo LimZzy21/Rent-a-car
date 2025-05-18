@@ -27,7 +27,7 @@ async function bootstrap() {
       transform: true,
       forbidNonWhitelisted: true,
       transformOptions: {
-        enableImplicitConversion: false,
+        enableImplicitConversion: true,
         enableCircularCheck: true,
       },
     }),

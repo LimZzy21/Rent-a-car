@@ -1,19 +1,19 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-}
-
-generator client {
-  provider = "prisma-client-js"
 }
 
 model User {
   id        String      @id @default(uuid())
   email     String      @unique
   password  String
+  createdAt DateTime    @default(now())
   fullName  String
   reviews   CarReview[] @relation("UserToReviews")
-  createdAt DateTime    @default(now())
 }
 
 model Car {
@@ -24,28 +24,32 @@ model Car {
   price             Int
   rating            Int
   isCurrentlyRented Boolean     @default(false)
+  createdAt         DateTime    @default(now())
+  images            String[]
+  features          String[]
   carDetails        CarDetails? @relation("CarToDetails")
   reviews           CarReview[] @relation("CarToReviews")
-  createdAt         DateTime    @default(now())
 }
 
 model CarDetails {
   carId        String @id
-  car          Car    @relation("CarToDetails", fields: [carId], references: [id])
   fuelType     String
+  topSpeed     Int
+  acceleration Float 
   transmission String
   mileage      Int
-  engineSize   Int
+  engineSize   Float
   enginePower  Int
+  car          Car    @relation("CarToDetails", fields: [carId], references: [id])
 }
 
 model CarReview {
   id          String   @id @default(uuid())
   videoUrl    String
-  videoKey    String
-  reviewedCar Car      @relation("CarToReviews", fields: [carId], references: [id])
   carId       String
-  reviewer    User     @relation("UserToReviews", fields: [reviewerId], references: [id])
   reviewerId  String
   createdAt   DateTime @default(now())
+  videoKey    String
+  reviewedCar Car      @relation("CarToReviews", fields: [carId], references: [id])
+  reviewer    User     @relation("UserToReviews", fields: [reviewerId], references: [id])
 }

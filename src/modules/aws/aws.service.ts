@@ -33,7 +33,12 @@ export class AwsService {
       },
       forcePathStyle: true,
     });
-    console.log('✅ Successfully connected to AWS S3 with region:', awsRegion, 'and bucket:', this.bucketName);
+    console.log(
+      '✅ Successfully connected to AWS S3 with region:',
+      awsRegion,
+      'and bucket:',
+      this.bucketName,
+    );
   }
 
   async uploadMediaFile(file: Express.Multer.File) {
@@ -64,6 +69,45 @@ export class AwsService {
         url,
         key,
       };
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  async uploadMediaFiles(files: Express.Multer.File[]) {
+    try {
+      const results = await Promise.all(
+        files.map(async (file) => {
+          const key = uuidv4() as string;
+
+          const sanitizedOriginalName = file.originalname.replace(
+            /[^a-zA-Z0-9-_]/g,
+            '_',
+          );
+
+          const command = new PutObjectCommand({
+            Bucket: this.bucketName,
+            Key: key,
+            Body: file.buffer,
+            ContentType: file.mimetype,
+            ACL: 'public-read',
+            Metadata: {
+              originalName: sanitizedOriginalName,
+            },
+          });
+
+          await this.client.send(command);
+
+          const url = this.getMediaFileUrl(key).url;
+
+          return {
+            url,
+            key,
+          };
+        }),
+      );
+
+      return results;
     } catch (error) {
       throw new InternalServerErrorException(error);
     }

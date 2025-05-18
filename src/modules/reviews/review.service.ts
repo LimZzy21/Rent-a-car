@@ -40,9 +40,7 @@ export class CarReviewService {
   }
 
   async getAll(): Promise<CarReview[]> {
-    return Promise.resolve(
-      (await this.prismaService.carReview.findMany({})) as CarReview[],
-    );
+    return this.prismaService.carReview.findMany();
   }
 
   async getById(id: string): Promise<CarReview> {
@@ -58,11 +56,9 @@ export class CarReviewService {
   }
 
   async getByCarId(carId: string): Promise<CarReview[]> {
-    return Promise.resolve(
-      (await this.prismaService.carReview.findMany({
-        where: { carId },
-      })) as CarReview[],
-    );
+    return this.prismaService.carReview.findMany({
+      where: { carId },
+    });
   }
 
   async deleteReview(id: string): Promise<{ message: string }> {
@@ -75,7 +71,7 @@ export class CarReviewService {
     }
 
     if (review.videoKey && typeof review.videoKey === 'string') {
-      await this.awsService.deleteMediaByKey(review.videoKey as string);
+      await this.awsService.deleteMediaByKey(review.videoKey);
     }
 
     await this.prismaService.carReview.delete({

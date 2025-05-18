@@ -1,7 +1,9 @@
 import {
+  IsArray,
   IsBoolean,
   IsInt,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   ValidateNested,
 } from 'class-validator';
@@ -13,6 +15,14 @@ export class CreateCarDetailsDto {
   @IsNotEmpty()
   fuelType: string;
 
+  @IsInt()
+  @IsNotEmpty()
+  topSpeed: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  acceleration: number; 
+
   @IsString()
   @IsNotEmpty()
   transmission: string;
@@ -21,11 +31,11 @@ export class CreateCarDetailsDto {
   @IsNotEmpty()
   mileage: number;
 
-  @IsInt()
+  @IsNumber()
   @IsNotEmpty()
   engineSize: number;
 
-  @IsInt()
+  @IsNumber()
   @IsNotEmpty()
   enginePower: number;
 }
@@ -43,11 +53,11 @@ export class CreateCarDto {
   @IsNotEmpty()
   model: string;
 
-  @IsInt()
+  @IsNumber()
   @IsNotEmpty()
   price: number;
 
-  @IsInt()
+  @IsNumber()
   @IsNotEmpty()
   rating: number;
 
@@ -57,6 +67,12 @@ export class CreateCarDto {
 
   @ValidateNested()
   @Type(() => CreateCarDetailsDto)
+  carDetails: CreateCarDetailsDto;
+
+  @IsArray()
   @IsOptional()
-  carDetails?: CreateCarDetailsDto;
+  images: Express.Multer.File[];
+
+  @IsArray()
+  features: string[];
 }

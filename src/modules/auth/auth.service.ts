@@ -18,7 +18,7 @@ export class AuthService {
     key: string,
     pass: string,
   ): Promise<User | null> {
-    const user = await this.usersService.getUserById({
+    const user = await this.usersService.user({
       email: key,
     });
     if (!user) {
@@ -45,7 +45,7 @@ export class AuthService {
   async validateUserByToken(token: string): Promise<User | null> {
     try {
       const payload = await this.jwtService.verifyAsync<JwtPayload>(token);
-      const user = await this.usersService.getUserById({
+      const user = await this.usersService.user({
         id: payload.sub,
       });
       return user;
