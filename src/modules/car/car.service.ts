@@ -46,7 +46,7 @@ export class CarService {
     page?: number;
     limit?: number;
   }) {
-    const { skip, take, cursor, where, orderBy, page = 1, limit = 10 } = params;
+    const { skip, take, cursor, where, orderBy, page = 1, limit = 6 } = params;
     
     const calculatedSkip = page ? (page - 1) * limit : skip;
     const calculatedTake = limit ?? take;
