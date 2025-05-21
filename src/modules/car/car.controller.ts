@@ -1,11 +1,13 @@
-import { Controller, Post, Body, Get, Delete, Param, UseInterceptors, UploadedFiles, Query } from '@nestjs/common';
+import { Controller, Post, Body, Get, Delete, Param, UseInterceptors, UploadedFiles, Query, UseGuards } from '@nestjs/common';
 import { CarService } from './car.service';
 import { CreateCarDto } from './dto/create-car.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { Public } from 'src/common/decorators/public.decorator';
+import { CarEndpoints } from 'src/Constants/Endpoints/Car';
+import { JwtAuthGuard } from 'src/guards/jwt.guard';
 
-@Controller('cars')
+@Controller(CarEndpoints.BASE)
 export class CarController {
   constructor(private readonly carService: CarService) {}
 
@@ -16,15 +18,21 @@ export class CarController {
   }
 
   @Public()
-  @Get('car/:id')
+  @Get(CarEndpoints.GET_CAR_BY_ID)
   getCarById(@Param('id') id: string) {
     return this.carService.getCarById(id);
   }
 
-  @Post('create')
+  @Public()
+  @Get(CarEndpoints.GET_SIMILAR_CARS)
+  getSimilarCars(@Param('id') id: string) {
+    return this.carService.getSimilarCars(id);
+  }
+
+  @Post(CarEndpoints.CREATE_CAR)
   @UseInterceptors(FilesInterceptor('images', 10, {
     storage: memoryStorage(),
-    fileFilter: (req, file, callback) => {
+    fileFilter: (_, file, callback) => {
       if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
         return callback(new Error('Only image files are allowed!'), false);
       }
@@ -34,6 +42,8 @@ export class CarController {
       fileSize: 20 * 1024 * 1024 
     }
   }))
+  
+  @UseGuards(JwtAuthGuard)
   create(@Body() createCarDto: CreateCarDto, @UploadedFiles() images: Express.Multer.File[]) {
     if (typeof createCarDto.features === 'string') {
       try {
@@ -56,7 +66,7 @@ export class CarController {
     return this.carService.create(createCarDto);
   }
 
-  @Delete('car/:id')
+  @Delete(CarEndpoints.DELETE_CAR)
   deleteCar(@Param('id') id: string) {
     return this.carService.deleteCar(id);
   }

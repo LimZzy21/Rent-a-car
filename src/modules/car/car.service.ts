@@ -97,6 +97,47 @@ export class CarService {
     return car;
   }
 
+  async getSimilarCars(id: string) {
+    const car = await this.prismaService.car.findUnique({
+      where: { id },
+      include: {
+        carDetails: true,
+      },
+    }); 
+
+    if (!car || !car.carDetails) {
+      throw new NotFoundException(CarErrors.CAR_NOT_FOUND, {
+        carId: id,
+      });
+    }
+
+    
+    const powerRange = 200; 
+    const similarCars = await this.prismaService.car.findMany({
+      where: {
+        AND: [
+          { id: { not: id } }, 
+          {
+            carDetails: {
+              enginePower: {
+                gte: car.carDetails.enginePower - powerRange,
+                lte: car.carDetails.enginePower + powerRange,
+              },
+            },
+          },
+        ],
+      },
+      include: {
+        carDetails: true,
+      },
+      take: 3
+    });
+
+
+    return similarCars;
+  }
+
+  
   async deleteCar(id: string) {
     const car = await this.prismaService.car.findUnique({
       where: { id },
