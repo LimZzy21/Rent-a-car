@@ -14,6 +14,7 @@ model User {
   createdAt DateTime    @default(now())
   fullName  String
   reviews   CarReview[] @relation("UserToReviews")
+  rentals   Rental[]    @relation("UserToRentals")
 }
 
 model Car {
@@ -29,6 +30,19 @@ model Car {
   features          String[]
   carDetails        CarDetails? @relation("CarToDetails")
   reviews           CarReview[] @relation("CarToReviews")
+  rentals           Rental[]    @relation("CarToRentals")
+}
+
+model Rental {
+  id         String    @id @default(uuid())
+  carId      String
+  userId     String
+  rentedFrom DateTime
+  rentedTo   DateTime
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  car        Car       @relation("CarToRentals", fields: [carId], references: [id])
+  user       User      @relation("UserToRentals", fields: [userId], references: [id])
 }
 
 model CarDetails {

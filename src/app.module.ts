@@ -8,9 +8,21 @@ import { AuthController } from './modules/auth/auth.controller';
 import { CarModule } from './modules/car/car.module';
 import { CarReviewModule } from './modules/reviews/review.module';
 import { AwsModule } from './modules/aws/aws.module';
+import { RentalModule } from './rental/rental.module';
+import { SchedulerModule } from './scheduler/scheduler.module';
 
 @Module({
-  imports: [PrismaModule, UsersModule, AuthModule, CarModule, CarReviewModule, AwsModule, ConfigModule.forRoot(),],
+  imports: [
+    PrismaModule, 
+    UsersModule, 
+    AuthModule, 
+    CarModule, 
+    CarReviewModule, 
+    AwsModule, 
+    RentalModule,
+    SchedulerModule,
+    ConfigModule.forRoot(),
+  ],
   controllers: [AuthController],
   providers: [AuthService]
 })
