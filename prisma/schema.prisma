@@ -37,9 +37,13 @@ model Rental {
   id         String    @id @default(uuid())
   carId      String
   userId     String
-  rentedFrom DateTime
+  rentedFrom DateTime 
+  totalPrice Int
+  notes      String?
   rentedTo   DateTime
-  isActive   Boolean   @default(true)
+  tel        String
+  fullName   String
+  status     RentalStatus    @default(PENDING)
   createdAt  DateTime  @default(now())
   car        Car       @relation("CarToRentals", fields: [carId], references: [id])
   user       User      @relation("UserToRentals", fields: [userId], references: [id])
@@ -66,4 +70,11 @@ model CarReview {
   videoKey    String
   reviewedCar Car      @relation("CarToReviews", fields: [carId], references: [id])
   reviewer    User     @relation("UserToReviews", fields: [reviewerId], references: [id])
+}
+
+
+enum RentalStatus {
+  USER_RENTED
+  PENDING
+  RETURNED
 }

@@ -8,7 +8,7 @@ import { AuthController } from './modules/auth/auth.controller';
 import { CarModule } from './modules/car/car.module';
 import { CarReviewModule } from './modules/reviews/review.module';
 import { AwsModule } from './modules/aws/aws.module';
-import { RentalModule } from './rental/rental.module';
+import { RentalModule } from './modules/rental/rental.module';
 import { SchedulerModule } from './scheduler/scheduler.module';
 
 @Module({

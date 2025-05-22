@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
+import { RentalStatus } from '@prisma/client';
 
 @Injectable()
 export class RentalSchedulerService {
@@ -10,37 +11,39 @@ export class RentalSchedulerService {
   async checkExpiredRentals() {
     const now = new Date();
 
-    const expiredRentals = await this.prisma.rental.findMany({
-      where: {
-        isActive: true,
-        rentedTo: {
-          lt: now,
-        },
-      },
-      include: {
-        car: true,
-      },
-    });
-
-    for (const rental of expiredRentals) {
-      await this.prisma.rental.update({
-        where: { id: rental.id },
-        data: { isActive: false },
-      });
-
-      const activeRentalsCount = await this.prisma.rental.count({
+    await this.prisma.$transaction(async (tx) => {
+      const expiredRentals = await tx.rental.findMany({
         where: {
-          carId: rental.carId,
-          isActive: true,
+          status: { in: [RentalStatus.USER_RENTED, RentalStatus.PENDING] },
+          rentedTo: {
+            lt: now,
+          },
+        },
+        include: {
+          car: true,
         },
       });
 
-      if (activeRentalsCount === 0) {
-        await this.prisma.car.update({
-          where: { id: rental.carId },
-          data: { isCurrentlyRented: false },
+      for (const rental of expiredRentals) {
+        await tx.rental.update({
+          where: { id: rental.id },
+          data: { status: RentalStatus.RETURNED },
         });
+
+        const activeRentalsCount = await tx.rental.count({
+          where: {
+            carId: rental.carId,
+            status: { in: [RentalStatus.USER_RENTED, RentalStatus.PENDING] },
+          },
+        });
+
+        if (activeRentalsCount === 0) {
+          await tx.car.update({
+            where: { id: rental.carId },
+            data: { isCurrentlyRented: false },
+          });
+        }
       }
-    }
+    });
   }
 }

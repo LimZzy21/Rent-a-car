@@ -1,8 +1,8 @@
 import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { RentalService } from './rental.service';
 import { CreateRentalDto } from './dto/create-rental.dto';
-import { JwtAuthGuard } from '../guards/jwt.guard';
-import { GetUser } from '../auth/decorators/get-user.decorator';
+import { JwtAuthGuard } from '../../guards/jwt.guard';
+import { GetUser } from '../../auth/decorators/get-user.decorator';
 
 @Controller('rentals')
 export class RentalController {
@@ -24,5 +24,10 @@ export class RentalController {
   @UseGuards(JwtAuthGuard)
   cancelRental(@GetUser('id') userId: string, @Param('id') rentalId: string) {
     return this.rentalService.cancelRental(userId, rentalId);
+  }
+
+  @Get(':id')
+  getRentalById(@Param('id') carId: string) {
+    return this.rentalService.getRentalById(carId);
   }
 } 

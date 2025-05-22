@@ -3,9 +3,9 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { CreateRentalDto } from './dto/create-rental.dto';
-import { Rental, Prisma } from '@prisma/client';
+import { Prisma, RentalStatus } from '@prisma/client';
 
 type RentalWithCar = Prisma.RentalGetPayload<{
   include: {
@@ -21,11 +21,9 @@ type RentalWithCar = Prisma.RentalGetPayload<{
 export class RentalService {
   constructor(private prisma: PrismaService) {}
 
-  async createRental(
-    userId: string,
-    createRentalDto: CreateRentalDto,
-  ): Promise<Rental> {
-    const { carId, rentedFrom, rentedTo } = createRentalDto;
+  async createRental(userId: string, createRentalDto: CreateRentalDto) {
+    const { carId, rentedFrom, rentedTo, tel, notes, fullName } =
+      createRentalDto;
 
     const car = await this.prisma.car.findUnique({
       where: { id: carId },
@@ -38,7 +36,9 @@ export class RentalService {
     const conflictingRental = await this.prisma.rental.findFirst({
       where: {
         carId,
-        isActive: true,
+        status: {
+          in: [RentalStatus.USER_RENTED, RentalStatus.PENDING],
+        },
         OR: [
           {
             rentedFrom: {
@@ -56,30 +56,34 @@ export class RentalService {
       throw new BadRequestException('Auto is already reserved for this period');
     }
 
-    const result = await this.prisma.$transaction(
-      async (tx): Promise<Rental> => {
-        const rental = await tx.rental.create({
-          data: {
-            rentedFrom: new Date(rentedFrom),
-            rentedTo: new Date(rentedTo),
-            car: {
-              connect: { id: carId },
-            },
-            user: {
-              connect: { id: userId },
-            },
-            isActive: true,
-          },
-        });
+    const result = await this.prisma.$transaction(async (tx) => {
+      const totalPrice = await this.calculateTotalPrice(
+        carId,
+        new Date(rentedFrom),
+        new Date(rentedTo),
+      );
 
-        await tx.car.update({
-          where: { id: carId },
-          data: { isCurrentlyRented: true },
-        });
+      const rental = await tx.rental.create({
+        data: {
+          rentedFrom: new Date(rentedFrom),
+          rentedTo: new Date(rentedTo),
+          car: { connect: { id: carId } },
+          user: { connect: { id: userId } },
+          status: RentalStatus.PENDING,
+          totalPrice,
+          tel,
+          notes,
+          fullName,
+        },
+      });
 
-        return rental;
-      },
-    );
+      await tx.car.update({
+        where: { id: carId },
+        data: { isCurrentlyRented: true },
+      });
+
+      return rental;
+    });
 
     return result;
   }
@@ -126,13 +130,13 @@ export class RentalService {
     }>(async (tx) => {
       await tx.rental.update({
         where: { id: rentalId },
-        data: { isActive: false },
+        data: { status: RentalStatus.RETURNED },
       });
 
       const activeRentals = await tx.rental.count({
         where: {
           carId: rental.carId,
-          isActive: true,
+          status: { in: [RentalStatus.PENDING, RentalStatus.USER_RENTED] },
         },
       });
 
@@ -147,5 +151,39 @@ export class RentalService {
     });
 
     return result;
+  }
+
+  async getRentalById(carId: string) {
+    const rental = await this.prisma.rental.findMany({
+      where: {
+        carId,
+        status: { in: [RentalStatus.PENDING, RentalStatus.USER_RENTED] },
+      },
+    });
+
+    if (!rental) {
+      throw new NotFoundException('Rental not found');
+    }
+
+    return rental;
+  }
+
+  async calculateTotalPrice(carId: string, rentedFrom: Date, rentedTo: Date) {
+    const car = await this.prisma.car.findUnique({
+      where: { id: carId },
+    });
+
+    if (!car) {
+      throw new NotFoundException('Car not found');
+    }
+
+    const timeDifferenceMs = rentedTo.getTime() - rentedFrom.getTime();
+    const days = Math.ceil(timeDifferenceMs / (1000 * 60 * 60 * 24));
+
+    const rentalDays = Math.max(days, 1);
+
+    const totalPrice = car.price * rentalDays;
+
+    return totalPrice;
   }
 }
