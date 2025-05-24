@@ -1,8 +1,9 @@
-import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { RentalService } from './rental.service';
 import { CreateRentalDto } from './dto/create-rental.dto';
 import { JwtAuthGuard } from '../../guards/jwt.guard';
 import { GetUser } from '../../auth/decorators/get-user.decorator';
+import { RentalStatus } from '@prisma/client';
 
 @Controller('rentals')
 export class RentalController {
@@ -29,5 +30,11 @@ export class RentalController {
   @Get(':id')
   getRentalById(@Param('id') carId: string) {
     return this.rentalService.getRentalById(carId);
+  }
+
+  @Patch('/status/')
+  @UseGuards(JwtAuthGuard)
+  changeRentalStatus(@Body() {status, rentalId}: {status: RentalStatus, rentalId: string}) {
+    return this.rentalService.changeRentalStatus(rentalId, status);
   }
 } 

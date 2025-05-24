@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma, User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
@@ -54,10 +54,46 @@ export class UsersService {
   }): Promise<User> {
     const { where, data } = params;
 
+    const user = await this.prismaService.user.findUnique({
+      where,
+    });
+
+    if (!user) {
+      throw new NotFoundException(AuthErrors.USER_NOT_FOUND);
+    }
+
+    const newAvatar = this.extractFieldValue(data.avatar, user.avatar);
+    const newFullName = this.extractFieldValue(data.fullName, user.fullName);
+
+    const hasAvatarChanged = newAvatar !== user.avatar;
+    const hasFullNameChanged = newFullName !== user.fullName;
+
+    if (!hasAvatarChanged && !hasFullNameChanged) {
+      throw new BadRequestException(AuthErrors.NO_CHANGES_MADE);
+    }
+
     return this.prismaService.user.update({
       where,
       data,
     });
+  }
+
+  // Допоміжний метод для витягування значення з Prisma UpdateInput
+  private extractFieldValue(fieldValue: any, currentValue: any): any {
+    if (fieldValue === undefined) {
+      return currentValue;
+    }
+    
+    if (typeof fieldValue === 'object' && fieldValue !== null) {
+      if ('set' in fieldValue) {
+        return fieldValue.set;
+      }
+      if ('unset' in fieldValue) {
+        return null;
+      }
+    }
+    
+    return fieldValue;
   }
 
   async getUsers(params: {

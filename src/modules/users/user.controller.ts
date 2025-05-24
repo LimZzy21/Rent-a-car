@@ -4,6 +4,8 @@ import {
   Param,
   Request,
   UseGuards,
+  Patch,
+  Body,
 } from '@nestjs/common';
 import { UsersService } from 'src/modules/users/users.service';
 import removeProperties from 'src/utils/removeProperties';
@@ -42,5 +44,21 @@ export class UserController {
     }
     const userWithoutPassword = removeProperties(user, 'password');
     return userWithoutPassword;
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('me')
+  async updateUser(@Request() req: CustomRequest, @Body() body: {avatar?: string, fullName?: string}) {
+
+    const user = await this.userService.updateUser({
+      where: {
+        id: req.user.id,
+      },
+      data: {
+        avatar: body.avatar,
+        fullName: body.fullName,
+      },
+    });
+    return removeProperties(user, 'password');
   }
 }

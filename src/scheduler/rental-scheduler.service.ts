@@ -14,7 +14,7 @@ export class RentalSchedulerService {
     await this.prisma.$transaction(async (tx) => {
       const expiredRentals = await tx.rental.findMany({
         where: {
-          status: { in: [RentalStatus.USER_RENTED, RentalStatus.PENDING] },
+          status: { in: [RentalStatus.NOW_RENTED, RentalStatus.PENDING] },
           rentedTo: {
             lt: now,
           },
@@ -33,7 +33,7 @@ export class RentalSchedulerService {
         const activeRentalsCount = await tx.rental.count({
           where: {
             carId: rental.carId,
-            status: { in: [RentalStatus.USER_RENTED, RentalStatus.PENDING] },
+            status: { in: [RentalStatus.NOW_RENTED, RentalStatus.PENDING] },
           },
         });
 

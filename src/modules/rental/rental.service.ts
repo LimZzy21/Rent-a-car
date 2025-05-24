@@ -37,7 +37,7 @@ export class RentalService {
       where: {
         carId,
         status: {
-          in: [RentalStatus.USER_RENTED, RentalStatus.PENDING],
+          in: [RentalStatus.NOW_RENTED, RentalStatus.PENDING],
         },
         OR: [
           {
@@ -136,7 +136,7 @@ export class RentalService {
       const activeRentals = await tx.rental.count({
         where: {
           carId: rental.carId,
-          status: { in: [RentalStatus.PENDING, RentalStatus.USER_RENTED] },
+          status: { in: [RentalStatus.PENDING, RentalStatus.NOW_RENTED] },
         },
       });
 
@@ -157,7 +157,7 @@ export class RentalService {
     const rental = await this.prisma.rental.findMany({
       where: {
         carId,
-        status: { in: [RentalStatus.PENDING, RentalStatus.USER_RENTED] },
+        status: { in: [RentalStatus.PENDING, RentalStatus.NOW_RENTED] },
       },
     });
 
@@ -185,5 +185,30 @@ export class RentalService {
     const totalPrice = car.price * rentalDays;
 
     return totalPrice;
+  }
+
+  async changeRentalStatus(rentalId: string, status: RentalStatus) {
+
+    const rent = await this.prisma.rental.findUnique({
+      where: { id: rentalId },
+    });
+    if (!rent) {
+      throw new BadRequestException('Rental not found');
+    }
+    if(rent.status === RentalStatus.RETURNED) {
+      throw new BadRequestException('Rental is already returned');
+    }
+
+    if (status === RentalStatus.PENDING) {
+      throw new BadRequestException('You cannot change the status to PENDING');
+    }
+
+
+    const rental = await this.prisma.rental.update({
+      where: { id: rentalId },
+      data: { status },
+    });
+
+    return rental;
   }
 }
