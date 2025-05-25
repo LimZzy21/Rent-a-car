@@ -10,6 +10,7 @@ datasource db {
 model User {
   id        String      @id @default(uuid())
   email     String      @unique
+  role      UserRole    @default(USER)
   avatar    String?
   bonusPoints Int       @default(0)
   password  String
@@ -72,6 +73,11 @@ model CarReview {
   videoKey    String
   reviewedCar Car      @relation("CarToReviews", fields: [carId], references: [id])
   reviewer    User     @relation("UserToReviews", fields: [reviewerId], references: [id])
+}
+
+enum UserRole {
+  USER
+  ADMIN
 }
 
 

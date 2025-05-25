@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Delete, Param, UseInterceptors, UploadedFiles, Query, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Get, Delete, Param, UseInterceptors, UploadedFiles, Query, UseGuards, Request } from '@nestjs/common';
 import { CarService } from './car.service';
 import { CreateCarDto } from './dto/create-car.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
@@ -6,6 +6,10 @@ import { memoryStorage } from 'multer';
 import { Public } from 'src/common/decorators/public.decorator';
 import { CarEndpoints } from 'src/Constants/Endpoints/Car';
 import { JwtAuthGuard } from 'src/guards/jwt.guard';
+import { CustomRequest } from 'src/types/entities/customRequest';
+import { UserRole } from '@prisma/client';
+import { ForbiddenException } from '@nestjs/common';
+import { AuthErrors } from 'src/Constants/Errors/Auth'; 
 
 @Controller(CarEndpoints.BASE)
 export class CarController {
@@ -33,7 +37,7 @@ export class CarController {
   @UseInterceptors(FilesInterceptor('images', 10, {
     storage: memoryStorage(),
     fileFilter: (_, file, callback) => {
-      if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
+      if (!file.originalname.match(/\.(jpg|jpeg|png|gif|webp)$/)) {
         return callback(new Error('Only image files are allowed!'), false);
       }
       callback(null, true);
@@ -44,7 +48,12 @@ export class CarController {
   }))
   
   @UseGuards(JwtAuthGuard)
-  create(@Body() createCarDto: CreateCarDto, @UploadedFiles() images: Express.Multer.File[]) {
+  create(@Body() createCarDto: CreateCarDto, @UploadedFiles() images: Express.Multer.File[], @Request() req: CustomRequest) {
+
+    if (req.user.role !== UserRole.ADMIN) {
+      throw new ForbiddenException(AuthErrors.NO_PERMISSION);
+    }
+
     if (typeof createCarDto.features === 'string') {
       try {
         createCarDto.features = JSON.parse(createCarDto.features as unknown as string);
