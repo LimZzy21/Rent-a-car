@@ -18,15 +18,6 @@ import { JwtAuthGuard } from 'src/guards/jwt.guard';
 export class UserController {
   constructor(private readonly userService: UsersService) {}
 
-  @Get()
-  async getUsers() {
-    const users = await this.userService.getUsers({});
-    const usersWithoutPassword = users.map((user) => {
-      return removeProperties(user, 'password');
-    });
-    return usersWithoutPassword;
-  }
-
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async findMe(@Request() req: CustomRequest) {

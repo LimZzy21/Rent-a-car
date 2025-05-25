@@ -10,6 +10,7 @@ import { CarReviewModule } from './modules/reviews/review.module';
 import { AwsModule } from './modules/aws/aws.module';
 import { RentalModule } from './modules/rental/rental.module';
 import { SchedulerModule } from './scheduler/scheduler.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { SchedulerModule } from './scheduler/scheduler.module';
     AwsModule, 
     RentalModule,
     SchedulerModule,
+    AdminModule,
     ConfigModule.forRoot(),
   ],
   controllers: [AuthController],

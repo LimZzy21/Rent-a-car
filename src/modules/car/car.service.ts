@@ -4,6 +4,7 @@ import { Car, Prisma } from '@prisma/client';
 import { NotFoundException } from 'src/common/exceptions/business.exceptions';
 import { CarErrors } from 'src/Constants/Errors/Car';
 import { CreateCarDto } from './dto/create-car.dto';
+import { FilterCarsDto } from './dto/filter-cars.dto';
 import { AwsService } from '../aws/aws.service';
 
 @Injectable()
@@ -25,7 +26,7 @@ export class CarService {
     return await this.prismaService.car.create({
       data: {
         ...carData,
-        images: images.map(image => image.url),
+        images: images.map((image) => image.url),
         features: createCarDto.features,
         carDetails: {
           create: carDetails,
@@ -37,38 +38,20 @@ export class CarService {
     });
   }
 
-  async getAllCars(params: {
-    skip?: number;
-    take?: number;
-    cursor?: Prisma.CarWhereUniqueInput;
-    where?: Prisma.CarWhereInput;
-    orderBy?: Prisma.CarOrderByWithRelationInput;
-    page?: number;
-    limit?: number;
-  }) {
-    const { skip, take, cursor, where, orderBy, page = 1, limit = 6 } = params;
-    
-    const calculatedSkip = page ? (page - 1) * limit : skip;
-    const calculatedTake = limit ?? take;
-    
-    const totalCount = await this.prismaService.car.count({ where });
-    
+  async getAllCars(params: { page?: number; limit?: number }) {
+    const { page = 1, limit = 6 } = params;
+
+    const calculatedSkip = (page - 1) * limit;
+
+    const totalCount = await this.prismaService.car.count();
+
     const cars = await this.prismaService.car.findMany({
       skip: calculatedSkip,
-      take: calculatedTake,
-      cursor,
-      where,
-      orderBy,
+      take: limit,
       include: {
         carDetails: true,
       },
     });
-
-    if (!cars.length) {
-      throw new NotFoundException(CarErrors.CAR_NOT_FOUND, {
-        filters: where,
-      });
-    }
 
     return {
       data: cars,
@@ -77,7 +60,7 @@ export class CarService {
         page: page,
         limit: limit,
         totalPages: Math.ceil(totalCount / limit),
-      }
+      },
     };
   }
 
@@ -103,7 +86,7 @@ export class CarService {
       include: {
         carDetails: true,
       },
-    }); 
+    });
 
     if (!car || !car.carDetails) {
       throw new NotFoundException(CarErrors.CAR_NOT_FOUND, {
@@ -111,12 +94,11 @@ export class CarService {
       });
     }
 
-    
-    const powerRange = 200; 
+    const powerRange = 200;
     const similarCars = await this.prismaService.car.findMany({
       where: {
         AND: [
-          { id: { not: id } }, 
+          { id: { not: id } },
           {
             carDetails: {
               enginePower: {
@@ -130,20 +112,18 @@ export class CarService {
       include: {
         carDetails: true,
       },
-      take: 3
+      take: 3,
     });
-
 
     return similarCars;
   }
 
-  
   async deleteCar(id: string) {
     const car = await this.prismaService.car.findUnique({
       where: { id },
       include: {
-        carDetails: true
-      }
+        carDetails: true,
+      },
     });
 
     if (!car) {
@@ -164,5 +144,97 @@ export class CarService {
       });
     });
   }
-}
 
+  async getFilteredCars(filters: FilterCarsDto) {
+    const {
+      brand,
+      isCurrentlyRented,
+      model,
+      name,
+      price,
+      fuelType,
+      transmission,
+      page = 1,
+      limit = 6,
+      sortBy,
+      sortOrder = 'asc',
+    } = filters;
+
+    const where: Prisma.CarWhereInput = {};
+
+    if (brand) {
+      where.brand = { contains: brand, mode: 'insensitive' };
+    }
+
+    if (isCurrentlyRented !== undefined) {
+      where.isCurrentlyRented = isCurrentlyRented;
+    }
+
+    if (model) {
+      where.model = { contains: model, mode: 'insensitive' };
+    }
+
+    if (name) {
+      where.name = { contains: name, mode: 'insensitive' };
+    }
+
+    if (price !== undefined) {
+      where.price = { gte: price };
+    }
+
+    if (fuelType || transmission) {
+      where.carDetails = {};
+      if (fuelType) {
+        where.carDetails.fuelType = fuelType;
+      }
+      if (transmission) {
+        where.carDetails.transmission = transmission;
+      }
+    }
+
+    let orderBy: Prisma.CarOrderByWithRelationInput = { createdAt: 'desc' };
+
+    if (sortBy) {
+      switch (sortBy) {
+        case 'price':
+          orderBy = { price: sortOrder as 'asc' | 'desc' };
+          break;
+        case 'name':
+          orderBy = { name: sortOrder as 'asc' | 'desc' };
+          break;
+        case 'rating':
+          orderBy = { rating: sortOrder as 'asc' | 'desc' };
+          break;
+        case 'createdAt':
+          orderBy = { createdAt: sortOrder as 'asc' | 'desc' };
+          break;
+        default:
+          orderBy = { createdAt: 'desc' };
+      }
+    }
+
+    const totalCount = await this.prismaService.car.count({ where });
+
+    const cars = await this.prismaService.car.findMany({
+      skip: (page - 1) * limit,
+      take: limit,
+      where,
+      orderBy,
+      include: {
+        carDetails: true,
+      },
+    });
+
+    return {
+      data: cars,
+      meta: {
+        total: totalCount,
+        page: page,
+        limit: limit,
+        totalPages: Math.ceil(totalCount / limit),
+        sortBy,
+        sortOrder,
+      },
+    };
+  }
+}
