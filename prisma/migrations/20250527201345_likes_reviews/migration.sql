@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "CarReview" ADD COLUMN     "hashTags" TEXT[] DEFAULT ARRAY[]::TEXT[],
+ADD COLUMN     "likes" INTEGER NOT NULL DEFAULT 0;

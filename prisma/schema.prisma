@@ -18,6 +18,7 @@ model User {
   fullName    String
   reviews     CarReview[] @relation("UserToReviews")
   rentals     Rental[]    @relation("UserToRentals")
+  videoLikes  VideoLike[] @relation("UserToVideoLikes")
 }
 
 model Car {
@@ -65,14 +66,29 @@ model CarDetails {
 }
 
 model CarReview {
-  id          String   @id @default(uuid())
+  id          String      @id @default(uuid())
   videoUrl    String
   carId       String
+  likes       Int         @default(0)
+  hashTags    String[]    @default([])
   reviewerId  String
-  createdAt   DateTime @default(now())
+  createdAt   DateTime    @default(now())
   videoKey    String
-  reviewedCar Car      @relation("CarToReviews", fields: [carId], references: [id])
-  reviewer    User     @relation("UserToReviews", fields: [reviewerId], references: [id])
+  reviewedCar Car         @relation("CarToReviews", fields: [carId], references: [id])
+  reviewer    User        @relation("UserToReviews", fields: [reviewerId], references: [id])
+  videoLikes  VideoLike[] @relation("ReviewToVideoLikes")
+}
+
+model VideoLike {
+  id        String   @id @default(uuid())
+  userId    String
+  reviewId  String
+  createdAt DateTime @default(now())
+
+  user   User      @relation("UserToVideoLikes", fields: [userId], references: [id])
+  review CarReview @relation("ReviewToVideoLikes", fields: [reviewId], references: [id])
+
+  @@unique([userId, reviewId])
 }
 
 enum UserRole {
