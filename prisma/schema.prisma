@@ -8,16 +8,16 @@ datasource db {
 }
 
 model User {
-  id        String      @id @default(uuid())
-  email     String      @unique
-  role      UserRole    @default(USER)
-  avatar    String?
-  bonusPoints Int       @default(0)
-  password  String
-  createdAt DateTime    @default(now())
-  fullName  String
-  reviews   CarReview[] @relation("UserToReviews")
-  rentals   Rental[]    @relation("UserToRentals")
+  id          String      @id @default(uuid())
+  email       String      @unique
+  role        UserRole    @default(USER)
+  avatar      String?
+  bonusPoints Int         @default(0)
+  password    String
+  createdAt   DateTime    @default(now())
+  fullName    String
+  reviews     CarReview[] @relation("UserToReviews")
+  rentals     Rental[]    @relation("UserToRentals")
 }
 
 model Car {
@@ -37,26 +37,26 @@ model Car {
 }
 
 model Rental {
-  id         String    @id @default(uuid())
+  id         String       @id @default(uuid())
   carId      String
   userId     String
-  rentedFrom DateTime 
+  rentedFrom DateTime
   totalPrice Int
   notes      String?
   rentedTo   DateTime
   tel        String
   fullName   String
-  status     RentalStatus    @default(PENDING)
-  createdAt  DateTime  @default(now())
-  car        Car       @relation("CarToRentals", fields: [carId], references: [id])
-  user       User      @relation("UserToRentals", fields: [userId], references: [id])
+  status     RentalStatus @default(PENDING)
+  createdAt  DateTime     @default(now())
+  car        Car          @relation("CarToRentals", fields: [carId], references: [id])
+  user       User         @relation("UserToRentals", fields: [userId], references: [id])
 }
 
 model CarDetails {
   carId        String @id
   fuelType     String
   topSpeed     Int
-  acceleration Float 
+  acceleration Float
   transmission String
   mileage      Int
   engineSize   Float
@@ -79,7 +79,6 @@ enum UserRole {
   USER
   ADMIN
 }
-
 
 enum RentalStatus {
   NOW_RENTED

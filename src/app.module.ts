@@ -11,6 +11,7 @@ import { AwsModule } from './modules/aws/aws.module';
 import { RentalModule } from './modules/rental/rental.module';
 import { SchedulerModule } from './scheduler/scheduler.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { TestLoggingController } from './test-logging.controller';
 
 @Module({
   imports: [
@@ -25,7 +26,7 @@ import { AdminModule } from './modules/admin/admin.module';
     AdminModule,
     ConfigModule.forRoot(),
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, TestLoggingController],
   providers: [AuthService]
 })
 export class AppModule {}
